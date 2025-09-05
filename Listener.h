@@ -1,0 +1,41 @@
+#pragma once
+#include <vector>
+#include <string>
+#include <Buffer.h>
+#include <unordered_map>
+#include <UdpEndpoint.h>
+#include <Connection.h>
+#include <mutex>
+
+namespace RakNet {
+
+class Listener {
+    public:
+        Listener(const std::string& address, uint16_t port);
+        void listen();
+        void close();
+        [[nodiscard]] std::string getListenAddress() const;
+        [[nodiscard]] uint16_t getListenPort() const;
+        void setPongData(std::string pongData);
+    private:
+        int64_t id;
+        int sockfd;
+        uint16_t maxMTU;
+
+        std::string pongData;
+        std::mutex pongDataMutex;
+        std::string listenAddress;
+        uint16_t listenPort;
+        int64_t cookieSeed;
+
+        std::unordered_map<UdpEndpoint, std::shared_ptr<Connection>, UdpEndpointHash> connections;
+        std::optional<std::string> handle(UdpEndpoint source, Buffer buffer);
+        std::optional<std::string> handleUnconnected(UdpEndpoint source, Buffer buffer);
+        [[nodiscard]] std::optional<std::string> handleUnconnectedPing(UdpEndpoint source, Buffer buffer) const;
+        [[nodiscard]] std::optional<std::string> handleOpenConnectionRequest1(UdpEndpoint source, Buffer buffer) const;
+        [[nodiscard]] std::optional<std::string> handleOpenConnectionRequest2(UdpEndpoint source, Buffer buffer);
+        void sendUnconnected(UdpEndpoint destination, std::unique_ptr<std::vector<uint8_t>> buffer) const;
+        uint32_t cookie(UdpEndpoint source) const;
+};
+
+}
