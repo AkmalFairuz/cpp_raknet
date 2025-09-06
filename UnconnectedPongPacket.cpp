@@ -1,6 +1,6 @@
 #include "UnconnectedPongPacket.h"
 
-std::optional<std::string> RakNet::UnconnectedPongPacket::Decode(Buffer buffer) {
+std::optional<std::string> RakNet::UnconnectedPongPacket::decode(Buffer buffer) {
     if (buffer.length < 34) {
         return std::string("Packet too short");
     }
@@ -15,7 +15,7 @@ std::optional<std::string> RakNet::UnconnectedPongPacket::Decode(Buffer buffer) 
     return std::nullopt;
 }
 
-std::expected<std::unique_ptr<std::vector<uint8_t>>, std::string> RakNet::UnconnectedPongPacket::Encode() const {
+std::expected<std::unique_ptr<std::vector<uint8_t>>, std::string> RakNet::UnconnectedPongPacket::encode() const {
     const uint16_t n = this->data.length();
     auto buffer = std::make_unique<std::vector<uint8_t>>(35+n);
     buffer->at(0) = ID_UNCONNECTED_PONG;

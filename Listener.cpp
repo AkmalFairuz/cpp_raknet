@@ -34,6 +34,10 @@ RakNet::Listener::Listener(const std::string& address, uint16_t port) {
     this->cookieSeed = time(nullptr);
 }
 
+int64_t RakNet::Listener::getId() const {
+    return this->id;
+}
+
 std::string RakNet::Listener::getListenAddress() const {
     return this->listenAddress;
 }
@@ -93,7 +97,7 @@ std::optional<std::string> RakNet::Listener::handleUnconnected(UdpEndpoint sourc
 
 std::optional<std::string> RakNet::Listener::handleUnconnectedPing(const UdpEndpoint source, const Buffer buffer) const {
     UnconnectedPingPacket packet{};
-    if (auto err = packet.Decode(buffer); err.has_value()) {
+    if (auto err = packet.decode(buffer); err.has_value()) {
         return err.value();
     }
 
@@ -101,26 +105,30 @@ std::optional<std::string> RakNet::Listener::handleUnconnectedPing(const UdpEndp
     response.pingTime = packet.pingTime;
     response.serverGUID = this->id;
     response.data = this->pongData;
-    this->sendUnconnected(source, std::move(response.Encode().value()));
+    this->sendUnconnected(source, std::move(response.encode().value()));
     return std::nullopt;
 }
 
 std::optional<std::string> RakNet::Listener::handleOpenConnectionRequest1(const UdpEndpoint source, const Buffer buffer) const {
     OpenConnectionRequest1Packet packet{};
-    if (auto err = packet.Decode(buffer); err.has_value()) {
+    if (auto err = packet.decode(buffer); err.has_value()) {
         return err.value();
     }
 
     OpenConnectionReply1Packet response{};
     response.serverHasSecurity = true;
-    response.cookie = this->cookie(source);
+    response.cookie = this->getCookie(source);
     response.serverGUID = this->id;
     uint16_t mtu = packet.mtu;
     if (mtu > this->maxMTU) {
         mtu = this->maxMTU;
     }
     response.mtu = mtu;
-    this->sendUnconnected(source, std::move(response.Encode().value()));
+    this->sendUnconnected(source, std::move(response.encode().value()));
+    return std::nullopt;
+}
+
+std::optional<std::string> RakNet::Listener::handleOpenConnectionRequest2(UdpEndpoint source, Buffer buffer) {
     return std::nullopt;
 }
 
@@ -131,9 +139,9 @@ void RakNet::Listener::sendUnconnected(const UdpEndpoint destination, const std:
     }
 }
 
-uint32_t RakNet::Listener::cookie(const UdpEndpoint source) const {
+uint32_t RakNet::Listener::getCookie(const UdpEndpoint source) const {
     auto b = std::vector<uint8_t>(10);
-    TO_LE(int64_t, this->id, b.data());
+    TO_LE(int64_t, this->cookieSeed, b.data());
     TO_LE(uint32_t, source.addr.s_addr, b.data()+8);
     TO_LE(uint32_t, source.port, b.data()+12);
 

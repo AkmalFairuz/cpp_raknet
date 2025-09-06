@@ -17,6 +17,7 @@ class Listener {
         [[nodiscard]] std::string getListenAddress() const;
         [[nodiscard]] uint16_t getListenPort() const;
         void setPongData(std::string pongData);
+        [[nodiscard]] int64_t getId() const;
     private:
         int64_t id;
         int sockfd;
@@ -35,7 +36,7 @@ class Listener {
         [[nodiscard]] std::optional<std::string> handleOpenConnectionRequest1(UdpEndpoint source, Buffer buffer) const;
         [[nodiscard]] std::optional<std::string> handleOpenConnectionRequest2(UdpEndpoint source, Buffer buffer);
         void sendUnconnected(UdpEndpoint destination, std::unique_ptr<std::vector<uint8_t>> buffer) const;
-        uint32_t cookie(UdpEndpoint source) const;
+        [[nodiscard]] uint32_t getCookie(UdpEndpoint source) const;
 };
 
 }

@@ -1,6 +1,6 @@
 #include "OpenConnectionRequest1Packet.h"
 
-std::optional<std::string> RakNet::OpenConnectionRequest1Packet::Decode(Buffer buffer) {
+std::optional<std::string> RakNet::OpenConnectionRequest1Packet::decode(Buffer buffer) {
     if (buffer.length < 17) {
         return std::string("Packet too short");
     }
@@ -9,7 +9,7 @@ std::optional<std::string> RakNet::OpenConnectionRequest1Packet::Decode(Buffer b
     return std::nullopt;
 }
 
-std::expected<std::unique_ptr<std::vector<uint8_t>>, std::string> RakNet::OpenConnectionRequest1Packet::Encode() const {
+std::expected<std::unique_ptr<std::vector<uint8_t>>, std::string> RakNet::OpenConnectionRequest1Packet::encode() const {
     auto buffer = std::make_unique<std::vector<uint8_t>>(this->mtu-20-8); // IP Header: 20 Bytes, UDP Header: 8 Bytes
     buffer->at(0) = ID_OPEN_CONNECTION_REQUEST1;
     std::ranges::copy(unconnectedMessageSequence, buffer->data() + 17);

@@ -4,12 +4,12 @@
 
 namespace RakNet {
 
-class OpenConnectionReply1Packet {
+class OpenConnectionReply2Packet {
 public:
     int64_t serverGUID;
-    bool serverHasSecurity;
-    uint32_t cookie;
+    UdpEndpoint clientAddress;
     uint16_t mtu;
+    bool doSecurity;
 
     std::optional<std::string> decode(Buffer buffer);
     [[nodiscard]] std::expected<std::unique_ptr<std::vector<uint8_t>>, std::string> encode() const;

@@ -22,4 +22,6 @@ add_executable(cpp_raknet
         OpenConnectionRequest1Packet.h
         include.h
         OpenConnectionReply1Packet.h
-        OpenConnectionReply1Packet.cpp)
+        OpenConnectionReply1Packet.cpp
+        OpenConnectionReply2Packet.h
+        OpenConnectionReply2Packet.cpp)
