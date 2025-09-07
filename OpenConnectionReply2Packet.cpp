@@ -1,6 +1,6 @@
 #include "OpenConnectionReply2Packet.h"
 
-std::optional<std::string> RakNet::OpenConnectionReply2Packet::decode(Buffer buffer) {
+std::optional<std::string> RakNet::OpenConnectionReply2Packet::decode(std::span<uint8_t> buffer) {
     return std::nullopt;
 }
 

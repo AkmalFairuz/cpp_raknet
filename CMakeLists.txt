@@ -25,3 +25,7 @@ add_executable(cpp_raknet
         OpenConnectionReply1Packet.cpp
         OpenConnectionReply2Packet.h
         OpenConnectionReply2Packet.cpp)
+
+if(WIN32)
+    target_link_libraries(cpp_raknet PRIVATE ws2_32)
+endif()

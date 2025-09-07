@@ -1,11 +1,8 @@
 #pragma once
-#include <vector>
-#include <string>
-#include <Buffer.h>
-#include <unordered_map>
-#include <UdpEndpoint.h>
 #include <Connection.h>
-#include <mutex>
+#include <include.h>
+
+#define RAKNET_MAX_READ_BUFFER 1500
 
 namespace RakNet {
 
@@ -30,11 +27,11 @@ class Listener {
         int64_t cookieSeed;
 
         std::unordered_map<UdpEndpoint, std::shared_ptr<Connection>, UdpEndpointHash> connections;
-        std::optional<std::string> handle(UdpEndpoint source, Buffer buffer);
-        std::optional<std::string> handleUnconnected(UdpEndpoint source, Buffer buffer);
-        [[nodiscard]] std::optional<std::string> handleUnconnectedPing(UdpEndpoint source, Buffer buffer) const;
-        [[nodiscard]] std::optional<std::string> handleOpenConnectionRequest1(UdpEndpoint source, Buffer buffer) const;
-        [[nodiscard]] std::optional<std::string> handleOpenConnectionRequest2(UdpEndpoint source, Buffer buffer);
+        std::optional<std::string> handle(UdpEndpoint source, std::span<uint8_t> buffer);
+        std::optional<std::string> handleUnconnected(UdpEndpoint source, std::span<uint8_t> buffer);
+        [[nodiscard]] std::optional<std::string> handleUnconnectedPing(UdpEndpoint source, std::span<uint8_t> buffer) const;
+        [[nodiscard]] std::optional<std::string> handleOpenConnectionRequest1(UdpEndpoint source, std::span<uint8_t> buffer) const;
+        [[nodiscard]] std::optional<std::string> handleOpenConnectionRequest2(UdpEndpoint source, std::span<uint8_t> buffer);
         void sendUnconnected(UdpEndpoint destination, std::unique_ptr<std::vector<uint8_t>> buffer) const;
         [[nodiscard]] uint32_t getCookie(UdpEndpoint source) const;
 };

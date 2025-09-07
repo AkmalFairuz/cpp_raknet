@@ -11,7 +11,7 @@ public:
     uint16_t mtu;
     bool doSecurity;
 
-    std::optional<std::string> decode(Buffer buffer);
+    std::optional<std::string> decode(std::span<uint8_t> buffer);
     [[nodiscard]] std::expected<std::unique_ptr<std::vector<uint8_t>>, std::string> encode() const;
 };
 

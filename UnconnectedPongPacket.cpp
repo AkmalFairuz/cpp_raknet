@@ -1,17 +1,17 @@
 #include "UnconnectedPongPacket.h"
 
-std::optional<std::string> RakNet::UnconnectedPongPacket::decode(Buffer buffer) {
-    if (buffer.length < 34) {
+std::optional<std::string> RakNet::UnconnectedPongPacket::decode(std::span<uint8_t> buffer) {
+    if (buffer.size() < 34) {
         return std::string("Packet too short");
     }
-    this->pingTime = FROM_BE(int64_t, buffer.data);
-    this->serverGUID = FROM_BE(int64_t, buffer.data + 8);
+    this->pingTime = FROM_BE(int64_t, buffer.data());
+    this->serverGUID = FROM_BE(int64_t, buffer.data() + 8);
     // Magic 16 bytes
-    const auto n = FROM_BE(uint16_t, buffer.data + 32);
-    if (buffer.length < 34 + n) {
-        return std::string(std::format("Packet too short, need {}, have {} bytes", buffer.length - 34, n));
+    const auto n = FROM_BE(uint16_t, buffer.data() + 32);
+    if (buffer.size() < 34 + n) {
+        return std::string(std::format("Packet too short, need {}, have {} bytes", buffer.size() - 34, n));
     }
-    this->data = std::string(buffer.data + 34, buffer.data + 34 + n);
+    this->data = std::string(buffer.data() + 34, buffer.data() + 34 + n);
     return std::nullopt;
 }
 

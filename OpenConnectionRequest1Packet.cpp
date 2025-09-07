@@ -1,11 +1,11 @@
 #include "OpenConnectionRequest1Packet.h"
 
-std::optional<std::string> RakNet::OpenConnectionRequest1Packet::decode(Buffer buffer) {
-    if (buffer.length < 17) {
+std::optional<std::string> RakNet::OpenConnectionRequest1Packet::decode(std::span<uint8_t> buffer) {
+    if (buffer.size() < 17) {
         return std::string("Packet too short");
     }
-    this->clientProtocol = buffer.data[16];
-    this->mtu = buffer.length + 20 + 8 + 1; // Headers + packet ID.
+    this->clientProtocol = buffer[16];
+    this->mtu = buffer.size() + 20 + 8 + 1; // Headers + packet ID.
     return std::nullopt;
 }
 

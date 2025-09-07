@@ -1,7 +1,15 @@
 #include "Listener.h"
-#include <unistd.h>
+#ifdef _WIN32
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#else
 #include <arpa/inet.h>
-#include <iostream>
+#include <unistd.h>
+#endif // _WIN32
+#include <cstring>
+#include <atomic>
+#include <thread>
+#include <mutex>
 #include <utility>
 
 #include "OpenConnectionReply1Packet.h"
@@ -22,7 +30,11 @@ RakNet::Listener::Listener(const std::string& address, uint16_t port) {
     serverAddr.sin_addr.s_addr = inet_addr(address.c_str());
     serverAddr.sin_port = htons(port);
     if (bind(this->sockfd, reinterpret_cast<sockaddr *>(&serverAddr), sizeof(serverAddr)) < 0) {
+#ifdef _WIN32
+        closesocket(this->sockfd);
+#else
         ::close(this->sockfd);
+#endif // _WIN32
         this->sockfd = -1;
         throw std::runtime_error("Failed to bind socket: " + std::string(strerror(errno)));
     }
@@ -48,16 +60,28 @@ uint16_t RakNet::Listener::getListenPort() const {
 
 void RakNet::Listener::close() {
     if (this->sockfd >= 0) {
+#ifdef _WIN32
+        closesocket(this->sockfd);
+#else
         ::close(this->sockfd);
+#endif // _WIN32
         this->sockfd = -1;
     }
 }
 
 void RakNet::Listener::listen() {
-    uint8_t buffer[1500];
+#ifdef _WIN32
+    char buffer[RAKNET_MAX_READ_BUFFER];
+#else
+    uint8_t buffer[RAKNET_MAX_READ_BUFFER];
+#endif // _WIN32
     while(true){
         sockaddr_in clientAddr{};
+#ifdef _WIN32
+        int clientAddrLen = sizeof(clientAddr);
+#else
         socklen_t clientAddrLen = sizeof(clientAddr);
+#endif // _WIN32
         const ssize_t recvLen = recvfrom(this->sockfd, buffer, sizeof(buffer), 0, reinterpret_cast<struct sockaddr *>(&clientAddr), &clientAddrLen);
         if (recvLen < 0) {
             throw std::runtime_error("Failed to receive data: " + std::string(strerror(errno)));
@@ -65,11 +89,16 @@ void RakNet::Listener::listen() {
         if (recvLen == 0) {
             continue;
         }
-        this->handle(toUdpEndpoint(clientAddr), Buffer{buffer, static_cast<size_t>(recvLen)});
+#ifdef _WIN32
+        const std::span packet(reinterpret_cast<uint8_t*>(buffer), recvLen);
+#else
+        const std::span<uint8_t> packet(buffer, recvLen);
+#endif // _WIN32
+        this->handle(toUdpEndpoint(clientAddr), packet);
     }
 }
 
-std::optional<std::string> RakNet::Listener::handle(UdpEndpoint source, Buffer packet) {
+std::optional<std::string> RakNet::Listener::handle(const UdpEndpoint source, std::span<uint8_t> packet) {
     if(const auto it = connections.find(source); it != connections.end()){
         // TODO:
         return std::nullopt;
@@ -77,9 +106,9 @@ std::optional<std::string> RakNet::Listener::handle(UdpEndpoint source, Buffer p
     return this->handleUnconnected(source, packet);
 }
 
-std::optional<std::string> RakNet::Listener::handleUnconnected(UdpEndpoint source, Buffer buffer) {
-    const uint8_t pid = buffer.data[0];
-    buffer = buffer.skip(1);
+std::optional<std::string> RakNet::Listener::handleUnconnected(const UdpEndpoint source, std::span<uint8_t> buffer) {
+    const uint8_t pid = buffer[0];
+    buffer = buffer.subspan(1);
     switch(pid){
         case ID_UNCONNECTED_PING:
             return this->handleUnconnectedPing(source, buffer);
@@ -95,7 +124,7 @@ std::optional<std::string> RakNet::Listener::handleUnconnected(UdpEndpoint sourc
     return std::nullopt;
 }
 
-std::optional<std::string> RakNet::Listener::handleUnconnectedPing(const UdpEndpoint source, const Buffer buffer) const {
+std::optional<std::string> RakNet::Listener::handleUnconnectedPing(const UdpEndpoint source, const std::span<uint8_t> buffer) const {
     UnconnectedPingPacket packet{};
     if (auto err = packet.decode(buffer); err.has_value()) {
         return err.value();
@@ -109,7 +138,7 @@ std::optional<std::string> RakNet::Listener::handleUnconnectedPing(const UdpEndp
     return std::nullopt;
 }
 
-std::optional<std::string> RakNet::Listener::handleOpenConnectionRequest1(const UdpEndpoint source, const Buffer buffer) const {
+std::optional<std::string> RakNet::Listener::handleOpenConnectionRequest1(const UdpEndpoint source, const std::span<uint8_t> buffer) const {
     OpenConnectionRequest1Packet packet{};
     if (auto err = packet.decode(buffer); err.has_value()) {
         return err.value();
@@ -128,13 +157,25 @@ std::optional<std::string> RakNet::Listener::handleOpenConnectionRequest1(const 
     return std::nullopt;
 }
 
-std::optional<std::string> RakNet::Listener::handleOpenConnectionRequest2(UdpEndpoint source, Buffer buffer) {
+std::optional<std::string> RakNet::Listener::handleOpenConnectionRequest2(UdpEndpoint source, std::span<uint8_t> buffer) {
     return std::nullopt;
 }
 
 void RakNet::Listener::sendUnconnected(const UdpEndpoint destination, const std::unique_ptr<std::vector<uint8_t>> buffer) const {
     auto destAddr = fromUdpEndpoint(destination);
-    if (sendto(this->sockfd, buffer->data(), buffer->size(), 0, reinterpret_cast<sockaddr*>(&destAddr), sizeof(destAddr)) < 0) {
+    if (sendto(
+        this->sockfd,
+#ifdef _WIN32
+        reinterpret_cast<const char*>(buffer->data()),
+        static_cast<int>(buffer->size()),
+#else
+        buffer->data(),
+        buffer->size(),
+#endif // _WIN32
+        0,
+        reinterpret_cast<sockaddr*>(&destAddr),
+        sizeof(destAddr)
+    ) < 0) {
         throw std::runtime_error("Failed to send data: " + std::string(strerror(errno)));
     }
 }

@@ -1,18 +1,9 @@
 #pragma once
 
 #include <cstdint>
-#include <cstddef>
 #include <vector>
 
 namespace RakNet {
-
-class Buffer {
-    public:
-        Buffer(uint8_t* data, const size_t length) : data(data), length(length) {}
-        uint8_t* data;
-        size_t length;
-        [[nodiscard]] Buffer skip(size_t bytes) const;
-};
 
 const std::vector<uint8_t> unconnectedMessageSequence = {0x00, 0xff, 0xff, 0x00, 0xfe, 0xfe, 0xfe, 0xfe, 0xfd, 0xfd, 0xfd, 0xfd, 0x12, 0x34, 0x56, 0x78};
 

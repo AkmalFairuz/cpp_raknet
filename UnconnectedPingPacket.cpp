@@ -1,12 +1,12 @@
 #include "UnconnectedPingPacket.h"
 
-std::optional<std::string> RakNet::UnconnectedPingPacket::decode(const Buffer buffer) {
-    if (buffer.length < 32) {
+std::optional<std::string> RakNet::UnconnectedPingPacket::decode(std::span<uint8_t> buffer) {
+    if (buffer.size() < 32) {
         return std::string("Packet too short");
     }
-    this->pingTime = FROM_BE(int64_t, buffer.data);
+    this->pingTime = FROM_BE(int64_t, buffer.data());
     // Magic 16 bytes
-    this->clientGUID = FROM_BE(int64_t, buffer.data + 24);
+    this->clientGUID = FROM_BE(int64_t, buffer.data() + 24);
     return std::nullopt;
 }
 

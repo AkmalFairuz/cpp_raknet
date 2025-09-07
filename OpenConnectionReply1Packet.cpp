@@ -1,17 +1,17 @@
 #include "OpenConnectionReply1Packet.h"
 
-std::optional<std::string> RakNet::OpenConnectionReply1Packet::decode(Buffer buffer) {
-    if (buffer.length < 27 || buffer.length < 27+static_cast<int>(buffer.data[24])*4) {
+std::optional<std::string> RakNet::OpenConnectionReply1Packet::decode(std::span<uint8_t> buffer) {
+    if (buffer.size() < 27 || buffer.size() < 27+static_cast<int>(buffer[24])*4) {
         return std::string("Packet too short");
     }
     auto offset = 0;
-    this->serverGUID = FROM_BE(int64_t, buffer.data + 16);
-    this->serverHasSecurity = buffer.data[24] != 0;
+    this->serverGUID = FROM_BE(int64_t, buffer.data() + 16);
+    this->serverHasSecurity = buffer[24] != 0;
     if (this->serverHasSecurity) {
         offset = 4;
-        this->cookie = FROM_BE(uint32_t, buffer.data + 25);
+        this->cookie = FROM_BE(uint32_t, buffer.data() + 25);
     }
-    this->mtu = FROM_BE(uint16_t, buffer.data + 25 + offset);
+    this->mtu = FROM_BE(uint16_t, buffer.data() + 25 + offset);
     return std::nullopt;
 }
 

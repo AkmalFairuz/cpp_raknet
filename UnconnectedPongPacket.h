@@ -8,7 +8,7 @@ class UnconnectedPongPacket {
         int64_t pingTime;
         int64_t serverGUID;
         std::string data;
-        std::optional<std::string> decode(Buffer buffer);
+        std::optional<std::string> decode(std::span<uint8_t> buffer);
         [[nodiscard]] std::expected<std::unique_ptr<std::vector<uint8_t>>, std::string> encode() const;
 };
 
