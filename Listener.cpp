@@ -182,9 +182,9 @@ void RakNet::Listener::sendUnconnected(const UdpEndpoint destination, const std:
 
 uint32_t RakNet::Listener::getCookie(const UdpEndpoint source) const {
     auto b = std::vector<uint8_t>(10);
-    TO_LE(int64_t, this->cookieSeed, b.data());
-    TO_LE(uint32_t, source.addr.s_addr, b.data()+8);
-    TO_LE(uint32_t, source.port, b.data()+12);
+    toBytesLE(this->cookieSeed, b.data());
+    toBytesLE(source.addr.s_addr, b.data()+8);
+    toBytesLE(source.port, b.data()+12);
 
     uint32_t hash = 0x811c9dc5;
     for (const auto x : b) {

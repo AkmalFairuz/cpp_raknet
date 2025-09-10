@@ -24,56 +24,60 @@ enum PacketID : uint8_t {
 
 }
 
+template <typename T>
+void fromBytesBE(T* val, const void* ptr) {
+    static_assert(std::is_trivially_copyable_v<T>, "T must be trivially copyable");
+    std::memcpy(val, ptr, sizeof(T));
+
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-    #define FROM_BE(type, ptr) ({ \
-        type _tmp; \
-        std::memcpy(&_tmp, (ptr), sizeof(type)); \
-        if constexpr (sizeof(type) == 2) _tmp = __builtin_bswap16(_tmp); \
-        else if constexpr (sizeof(type) == 4) _tmp = __builtin_bswap32(_tmp); \
-        else if constexpr (sizeof(type) == 8) _tmp = __builtin_bswap64(_tmp); \
-        _tmp; \
-    })
-    #define FROM_LE(type, ptr) ({ \
-        type _tmp; \
-        std::memcpy(&_tmp, (ptr), sizeof(type)); \
-        _tmp; \
-    })
-
-    #define TO_BE(type, val, ptr) ({ \
-        type _tmp = val; \
-        if constexpr (sizeof(type) == 2) _tmp = __builtin_bswap16(_tmp); \
-        else if constexpr (sizeof(type) == 4) _tmp = __builtin_bswap32(_tmp); \
-        else if constexpr (sizeof(type) == 8) _tmp = __builtin_bswap64(_tmp); \
-        std::memcpy((ptr), &_tmp, sizeof(type)); \
-    })
-    #define TO_LE(type, val, ptr) ({ \
-        type _tmp = val; \
-        std::memcpy((ptr), &_tmp, sizeof(type)); \
-    })
-#else
-    #define FROM_BE(type, ptr) ({ \
-        type _tmp; \
-        std::memcpy(&_tmp, (ptr), sizeof(type)); \
-        _tmp; \
-    })
-    #define FROM_LE(type, ptr) ({ \
-        type _tmp; \
-        std::memcpy(&_tmp, (ptr), sizeof(type)); \
-        if constexpr (sizeof(type) == 2) _tmp = __builtin_bswap16(_tmp); \
-        else if constexpr (sizeof(type) == 4) _tmp = __builtin_bswap32(_tmp); \
-        else if constexpr (sizeof(type) == 8) _tmp = __builtin_bswap64(_tmp); \
-        _tmp; \
-    })
-
-    #define TO_BE(type, val, ptr) ({ \
-        type _tmp = val; \
-        std::memcpy((ptr), &_tmp, sizeof(type)); \
-    })
-    #define TO_LE(type, val, ptr) ({ \
-        type _tmp = val; \
-        if constexpr (sizeof(type) == 2) _tmp = __builtin_bswap16(_tmp); \
-        else if constexpr (sizeof(type) == 4) _tmp = __builtin_bswap32(_tmp); \
-        else if constexpr (sizeof(type) == 8) _tmp = __builtin_bswap64(_tmp); \
-        std::memcpy((ptr), &_tmp, sizeof(type)); \
-    })
+    if constexpr (sizeof(T) == 2)
+        *val = __builtin_bswap16(*val);
+    else if constexpr (sizeof(T) == 4)
+        *val = __builtin_bswap32(*val);
+    else if constexpr (sizeof(T) == 8)
+        *val = __builtin_bswap64(*val);
 #endif
+}
+
+template <typename T>
+void fromBytesLE(T* val, const void* ptr) {
+    static_assert(std::is_trivially_copyable_v<T>, "T must be trivially copyable");
+    std::memcpy(&val, ptr, sizeof(T));
+
+#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+    if constexpr (sizeof(T) == 2)
+        tmp = __builtin_bswap16(tmp);
+    else if constexpr (sizeof(T) == 4)
+        tmp = __builtin_bswap32(tmp);
+    else if constexpr (sizeof(T) == 8)
+        tmp = __builtin_bswap64(tmp);
+#endif
+}
+
+template <typename T>
+void toBytesBE(T val, void* ptr) {
+    static_assert(std::is_trivially_copyable_v<T>, "T must be trivially copyable");
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+    if constexpr (sizeof(T) == 2)
+        val = __builtin_bswap16(val);
+    else if constexpr (sizeof(T) == 4)
+        val = __builtin_bswap32(val);
+    else if constexpr (sizeof(T) == 8)
+        val = __builtin_bswap64(val);
+#endif
+    std::memcpy(ptr, &val, sizeof(T));
+}
+
+template <typename T>
+void toBytesLE(T val, void* ptr) {
+    static_assert(std::is_trivially_copyable_v<T>, "T must be trivially copyable");
+#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+    if constexpr (sizeof(T) == 2)
+        val = __builtin_bswap16(val);
+    else if constexpr (sizeof(T) == 4)
+        val = __builtin_bswap32(val);
+    else if constexpr (sizeof(T) == 8)
+        val = __builtin_bswap64(val);
+#endif
+    std::memcpy(ptr, &val, sizeof(T));
+}
